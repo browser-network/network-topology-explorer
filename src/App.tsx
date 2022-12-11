@@ -1,5 +1,5 @@
 import './App.scss'
-import ForceGraph2D from 'react-force-graph-2d'
+import ForceGraph3D from 'react-force-graph-3d'
 import { useEffect, useState } from 'react'
 import { APP_ID, network } from './network'
 import { Message } from '@browser-network/network'
@@ -36,10 +36,15 @@ const transformStoredGraphData = (storedGraphData: StoredGraphData): GraphData =
   for (const address in storedGraphData) {
     graphData.nodes.push({ id: address })
     for (const addy in storedGraphData[address]) {
-      graphData.links.push({
-        source: address,
-        target: addy
-      })
+
+      // We don't want to have any links that we don't have in our nodes,
+      // otherwise we'll get fat errors in the console and it won't render anyways.
+      if (addy in storedGraphData) {
+        graphData.links.push({
+          source: address,
+          target: addy
+        })
+      }
     }
   }
 
@@ -103,7 +108,7 @@ function App() {
     <div className="App">
       <h3>{network.address}</h3>
       <span>{Object.keys(storedGraphData[network.address] || {}).length} connections</span>
-      <ForceGraph2D
+      <ForceGraph3D
         graphData={graphData}
       />
     </div>
