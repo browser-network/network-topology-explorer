@@ -40,7 +40,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "release": "npm run build && npm run deploy && rm -rf build",
-    "deploy": "gh-pages -d build"
+    "deploy": "NODE_DEBUG=gh-pages gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
