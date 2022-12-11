@@ -1,6 +1,6 @@
 import './App.scss'
 import ForceGraph3D from 'react-force-graph-3d'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { APP_ID, network } from './network'
 import { Message } from '@browser-network/network'
 import { Connection } from '@browser-network/network/dist/src/Connection'
@@ -17,12 +17,28 @@ setInterval(() => {
       }, {} as { [address: string]: true }),
     }
   })
-}, 500)
+}, 2000)
 
-type GraphData = {
+type InitialGraphData = {
   nodes: { id: string }[]
-  links: { source: string, target: string }[]
+  links: {
+    source: string,
+    target: string
+  }[]
 }
+
+type ProcessedGraphData = {
+  nodes: { id: string }[]
+  links: {
+    source: { id: string },
+    target: { id: string }
+  }[]
+}
+
+// See the problem is the graph library requires a shape like InitialGraphData
+// but then mutates the objects into ProcessedGraphData and then to reference them
+// for link particles requires direct references to those processed ones.
+type GraphData = InitialGraphData | ProcessedGraphData
 
 type StoredGraphData = {
   [address: string]: {
@@ -30,8 +46,8 @@ type StoredGraphData = {
   }
 }
 
-const transformStoredGraphData = (storedGraphData: StoredGraphData): GraphData => {
-  const graphData: GraphData = { nodes: [], links: [] }
+const transformStoredGraphData = (storedGraphData: StoredGraphData): InitialGraphData => {
+  const graphData: InitialGraphData = { nodes: [], links: [] }
 
   for (const address in storedGraphData) {
     graphData.nodes.push({ id: address })
@@ -53,11 +69,32 @@ const transformStoredGraphData = (storedGraphData: StoredGraphData): GraphData =
 
 function App() {
 
+  const [shouldDraw, setShouldDraw] = useState(false)
   const [storedGraphData, setStoredGraphData] = useState<StoredGraphData>({})
+  const fgRef = useRef<any>()
+
+  // @ts-ignore
+  window.toggleDraw = () => setShouldDraw(!shouldDraw)
+
+  const graphData = transformStoredGraphData(storedGraphData)
 
   const handleMessage = (message: Message) => {
+
+    // TODO Great maybe but won't be towards the right feller
+    // @ts-ignore
+    // const link = graphData.links.find(link => message.address === (link.source.id || link.source) && message.destination === (link.target.id || link.target))
+    // fgRef.current?.emitParticle(link)
+    const links = (graphData as ProcessedGraphData).links.filter(link => {
+      return (
+        [link.source.id, link.source].includes(message.address)
+      )
+    })
+    links.forEach(link => fgRef.current?.emitParticle(link))
+    // console.log('handleMessage, found link:', link)
+
     if (message.appId !== APP_ID) { return }
 
+    // Update the graph itself
     if (message.type === 'connection-info') {
       const extentData = storedGraphData[message.data.address]
 
@@ -70,8 +107,6 @@ function App() {
   }
 
   const handleDestroyConnection = ((connection: Connection) => {
-    console.log('handleDestroyConnection, con:', connection)
-
     const update = { ...storedGraphData }
 
     // get rid of the top level address
@@ -98,19 +133,17 @@ function App() {
     }
   }, [storedGraphData])
 
-  console.log("storedGraphData:", storedGraphData)
-
-  const graphData = transformStoredGraphData(storedGraphData)
-
-  console.log("graphData:", graphData)
-
   return (
     <div className="App">
       <h3>{network.address}</h3>
       <span>{Object.keys(storedGraphData[network.address] || {}).length} connections</span>
-      <ForceGraph3D
+      {shouldDraw && <ForceGraph3D
         graphData={graphData}
+        ref={fgRef}
+        linkDirectionalParticleColor={() => 'red'}
+        linkDirectionalParticleWidth={2}
       />
+      }
     </div>
   )
 }
