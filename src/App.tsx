@@ -5,7 +5,7 @@ import { APP_ID, network } from './network'
 import { Message } from '@browser-network/network'
 import { Connection } from '@browser-network/network/dist/src/Connection'
 
-setInterval(() => {
+const sendConnectionInfoMessage = () => {
   network.broadcast({
     type: 'connection-info',
     appId: APP_ID,
@@ -17,7 +17,7 @@ setInterval(() => {
       }, {} as { [address: string]: true }),
     }
   })
-}, 2000)
+}
 
 type InitialGraphData = {
   nodes: { id: string }[]
@@ -72,6 +72,7 @@ function App() {
   const [shouldDraw, setShouldDraw] = useState(false)
   const [storedGraphData, setStoredGraphData] = useState<StoredGraphData>({})
   const fgRef = useRef<any>()
+  const sendConInfoTimerRef = useRef<NodeJS.Timer>()
 
   // @ts-ignore
   window.toggleDraw = () => setShouldDraw(!shouldDraw)
@@ -80,17 +81,14 @@ function App() {
 
   const handleMessage = (message: Message) => {
 
-    // TODO Great maybe but won't be towards the right feller
-    // @ts-ignore
-    // const link = graphData.links.find(link => message.address === (link.source.id || link.source) && message.destination === (link.target.id || link.target))
-    // fgRef.current?.emitParticle(link)
-    const links = (graphData as ProcessedGraphData).links.filter(link => {
-      return (
+    // Emit them message particles
+    (graphData as unknown as ProcessedGraphData).links.forEach(link => {
+      const shouldSend =  (
         [link.source.id, link.source].includes(message.address)
       )
+
+      if (shouldSend) { fgRef.current?.emitParticle(link) }
     })
-    links.forEach(link => fgRef.current?.emitParticle(link))
-    // console.log('handleMessage, found link:', link)
 
     if (message.appId !== APP_ID) { return }
 
@@ -126,10 +124,17 @@ function App() {
     network.on('broadcast-message', handleMessage)
     network.on('destroy-connection', handleDestroyConnection)
 
+    // Send messages at a rate inversely proportional to the size of the network
+    // soas not to destroy bandwidth
+    const numNodes = Object.keys(storedGraphData).length
+    const interval = (numNodes) * 1000
+    sendConInfoTimerRef.current = setInterval(sendConnectionInfoMessage, interval)
+
     return () => {
       network.removeListener('message', handleMessage)
       network.removeListener('broadcast-message', handleMessage)
       network.removeListener('destroy-connection', handleDestroyConnection)
+      window.clearInterval(sendConInfoTimerRef.current!)
     }
   }, [storedGraphData])
 
