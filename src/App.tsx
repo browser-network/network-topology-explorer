@@ -102,7 +102,7 @@ function App() {
   return (
     <div className="App">
       <h3>{network.address}</h3>
-      <span>{storedGraphData[network.address]?.length} connections</span>
+      <span>{Object.keys(storedGraphData[network.address] || {}).length} connections</span>
       <ForceGraph2D
         graphData={graphData}
       />
