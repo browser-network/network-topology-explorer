@@ -1,8 +1,29 @@
+$bg: #00000D;
+$bg-light: #00005D;
+
 body {
-  background-color: #00000D;
+  background-color: $bg;
   color: white;
+  padding: 1em;
 }
 
 h3 {
   margin-top: 0;
 }
+
+button {
+  padding: 1em;
+  margin-top: 1em;
+  background: $bg-light;
+  border: 2px solid grey;
+  border-radius: 0.2em;
+  color: white;
+  cursor: pointer;
+  transition: filter,border 0.2s;
+
+  &:hover {
+    filter: brightness(1.5);
+    border: 2px solid white;
+  }
+}
+

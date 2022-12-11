@@ -19,6 +19,9 @@ const sendConnectionInfoMessage = () => {
   })
 }
 
+// See the problem is the graph library requires a shape like InitialGraphData
+// but then mutates the objects into ProcessedGraphData and then to reference them
+// for link particles requires direct references to those processed ones.
 type InitialGraphData = {
   nodes: { id: string }[]
   links: {
@@ -34,11 +37,6 @@ type ProcessedGraphData = {
     target: { id: string }
   }[]
 }
-
-// See the problem is the graph library requires a shape like InitialGraphData
-// but then mutates the objects into ProcessedGraphData and then to reference them
-// for link particles requires direct references to those processed ones.
-type GraphData = InitialGraphData | ProcessedGraphData
 
 type StoredGraphData = {
   [address: string]: {
@@ -73,9 +71,6 @@ function App() {
   const [storedGraphData, setStoredGraphData] = useState<StoredGraphData>({})
   const fgRef = useRef<any>()
   const sendConInfoTimerRef = useRef<NodeJS.Timer>()
-
-  // @ts-ignore
-  window.toggleDraw = () => setShouldDraw(!shouldDraw)
 
   const graphData = transformStoredGraphData(storedGraphData)
 
@@ -142,6 +137,8 @@ function App() {
     <div className="App">
       <h3>{network.address}</h3>
       <span>{Object.keys(storedGraphData[network.address] || {}).length} connections</span>
+      <br/>
+      <button onClick={() => setShouldDraw(!shouldDraw)}>Toggle Graph</button>
       {shouldDraw && <ForceGraph3D
         graphData={graphData}
         ref={fgRef}
