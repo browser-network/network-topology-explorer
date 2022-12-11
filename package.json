@@ -38,7 +38,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "release": "npm run build && npm run deploy && rm -rf build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -59,6 +61,7 @@
     ]
   },
   "devDependencies": {
-    "@types/three": "^0.146.0"
+    "@types/three": "^0.146.0",
+    "gh-pages": "^4.0.0"
   }
 }
