@@ -7,7 +7,7 @@ const { generateSecret } = require('@browser-network/crypto/umd/crypto') as { ge
 export const network = new Net({
   secret: generateSecret(),
   networkId: 'topology-net-ygai3r8ywfoih',
-  switchAddress: 'https://switchboard.aaronik.com'
+  switchAddress: 'https://browser-network-switchboard.herokuapp.com/'
   // switchAddress: 'http://localhost:5678'
 })
 
