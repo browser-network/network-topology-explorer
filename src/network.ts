@@ -1,7 +1,7 @@
 import type Network from '@browser-network/network'
 import type { generateSecret as GenerateSecret } from '@browser-network/crypto'
 
-const Net = require('@browser-network/network/umd/network').default as typeof Network
+const Net = require('@browser-network/network/umd/network') as typeof Network
 const { generateSecret } = require('@browser-network/crypto/umd/crypto') as { generateSecret: typeof GenerateSecret }
 
 export const network = new Net({
